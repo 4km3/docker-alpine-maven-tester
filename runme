@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+docker run                                                                     \
+  --rm                                                                         \
+  -e RELEASE_JAR=$RELEASE_JAR                                                  \
+  -e GITHUB_REPO=$GITHUB_REPO                                                  \
+  -e GITHUB_USER=$GITHUB_USER                                                  \
+  -e GITHUB_BRANCH=$GITHUB_BRANCH                                              \
+  -e REPO_DIR=$REPO_DIR                                                        \
+  -e MAVEN_ACCEPTANCE_TEST_TARGET=$MAVEN_ACCEPTANCE_TEST_TARGET                \
+  4km3/maven-tester

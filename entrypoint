@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+: "${RELEASE_JAR?Need Java app to run}"
+: "${GITHUB_REPO?Need a repository name}"
+: "${GITHUB_USER?Need a GitHub username}"
+: "${GITHUB_BRANCH:=master}"
+: "${REPO_DIR:=.}"
+: "${MAVEN_ACCEPTANCE_TEST_TARGET:=test}"
+
+set -xe
+# Clone repo and get inside
+git clone                                                                      \
+    -b "$GITHUB_BRANCH"                                                        \
+    https://github.com/"$GITHUB_USER"/"$GITHUB_REPO".git                       \
+    /srv/"$GITHUB_REPO"
+cd /srv/"$GITHUB_REPO"/"$REPO_DIR"
+
+# Extract artifact name and version from pom.xml
+VERSION=$(xpath -q -e '/project/version/text()' pom.xml)
+TARGET=$(xpath -q -e '/project/artifactId/text()' pom.xml)
+
+# Get release binary and place in /usr/local/bin
+wget ${RELEASE_JAR} -O /usr/local/bin/$TARGET-$VERSION.jar
+
+# Run the java jar with the included jre java
+java -jar /usr/local/bin/$TARGET-$VERSION.jar "$@" &
+echo $! > /run/$TARGET-$VERSION.pid
+
+# Perform maven acceptance tests
+cd acceptance-test
+mvn $MAVEN_ACCEPTANCE_TEST_TARGET
+EXIT_RC=$?
+
+kill -9 $(</run/$TARGET-$VERSION.pid)
+
+exit $EXIT_RC
